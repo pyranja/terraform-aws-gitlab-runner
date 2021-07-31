@@ -14,7 +14,7 @@ locals {
 
   tags = merge(
   { Name = local.manager_instance_name },
-  var.custom_tags,
+  var.tags,
   )
 }
 

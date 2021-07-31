@@ -31,7 +31,7 @@ variable "autoscale" {
 # These variables may be optionally passed in by the templates using this module to overwite the defaults.
 # ----------------------------------------------------------------------------------------------------------------------
 
-variable "custom_tags" {
+variable "tags" {
   description = "A map of key value pairs that represents custom tags to apply to resources."
   type        = map(string)
   default     = {}
