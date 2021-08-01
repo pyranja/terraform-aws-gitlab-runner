@@ -36,3 +36,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "manager_ami_id" {
+  description = "The Amazon Machine Image (AMI) to run on the manager instance (defaults to latest amzn linux 2 AMI)."
+  type        = string
+  default     = null
+}
+
+variable "manager_instance_type" {
+  description = "The type of EC2 instance to use for the manager instance (defaults to t3.nano)."
+  type        = string
+  default     = "t3.nano"
+}

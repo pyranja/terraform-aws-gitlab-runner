@@ -1,8 +1,8 @@
 
 output "security_group" {
-  value = aws_security_group._
+  value = module.controller.security_group
 }
 
 output "iam_role" {
-  value = aws_iam_role._
+  value = module.controller.iam_role
 }
