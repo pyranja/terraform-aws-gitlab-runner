@@ -47,6 +47,11 @@ write_files:
             "amazonec2-spot-price=",
           ]
         [runners.cache]
+          Type = "s3"
+          Shared = true
+          [runners.cache.s3]
+            BucketName = "${cache_bucket}"
+            BuckerLocation = "${cache_region}"
   - path: "/etc/td-agent-bit/td-agent-bit.conf"
     permission: "0644"
     owner: "root:root"

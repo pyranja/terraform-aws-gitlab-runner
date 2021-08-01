@@ -36,3 +36,13 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "cache" {
+  description = "Provide an existing S3 bucket as shared cache. If not set, a bucket is created and configured as cache for this runner only."
+  type = object({
+    id     = string
+    arn    = string
+    region = string
+  })
+  default = null
+}

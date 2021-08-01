@@ -13,8 +13,8 @@ locals {
   manager_instance_name = "gl-${var.name}"
 
   tags = merge(
-  { Name = local.manager_instance_name },
-  var.tags,
+    { Name = local.manager_instance_name },
+    var.tags,
   )
 }
 
@@ -95,6 +95,8 @@ resource "aws_launch_template" "_" {
     instance_type = var.autoscale.instance_type
     min_worker    = var.autoscale.min_worker
     max_worker    = var.autoscale.max_worker
+    cache_bucket  = var.cache.id
+    cache_region  = var.cache.region
   }))
 
   vpc_security_group_ids = [aws_security_group._.id]

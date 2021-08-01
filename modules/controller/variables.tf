@@ -26,6 +26,15 @@ variable "autoscale" {
   })
 }
 
+variable "cache" {
+  description = "Gitlab runner S3 bucket for caching."
+  type = object({
+    id     = string
+    arn    = string
+    region = string
+  })
+}
+
 # ----------------------------------------------------------------------------------------------------------------------
 # OPTIONAL PARAMETERS
 # These variables may be optionally passed in by the templates using this module to overwite the defaults.
