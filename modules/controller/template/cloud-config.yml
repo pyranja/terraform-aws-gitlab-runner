@@ -23,7 +23,7 @@ write_files:
         [runners.docker]
           image = "docker"
           pull_policy = "always"
-          volumes = ["/var/run/docker.sock:/var/run/docker.sock", "/cache"]
+          volumes = ["/var/run/docker.sock:/var/run/docker.sock"]
           wait_for_services_timeout = 30
           disable_cache = true
           privileged = false
@@ -31,7 +31,7 @@ write_files:
         [runners.machine]
           IdleCount = ${min_worker}
           IdleTime = 1800
-          MaxBuilds = ${max_worker}
+          MaxBuilds = 100
           MachineDriver = "amazonec2"
           MachineName = "gl-${name}-worker-%s"
           MachineOptions = [
