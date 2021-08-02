@@ -209,8 +209,9 @@ data "aws_iam_policy_document" "cache_access" {
       "s3:DeleteObject",
     ]
 
-    resources = [ # access to any object in the cache bucket
-      "${var.cache.arn}*",
+    resources = [
+      var.cache.arn,        # access to put objects
+      "${var.cache.arn}/*", # access to read/remove objects
     ]
   }
 }
