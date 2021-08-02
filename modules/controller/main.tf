@@ -192,6 +192,34 @@ resource "aws_iam_role_policy_attachment" "cloudwatch" {
   policy_arn = data.aws_iam_policy.cloudwatch.arn
 }
 
+resource "aws_iam_policy" "cache_access" {
+  name_prefix = "${local.manager_instance_name}-cache"
+  tags        = local.tags
+  policy      = data.aws_iam_policy_document.cache_access.json
+}
+
+data "aws_iam_policy_document" "cache_access" {
+  statement {
+    sid    = "GitlabCache"
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:GetObjectVersion",
+      "s3:GetObject",
+      "s3:DeleteObject",
+    ]
+
+    resources = [ # access to any object in the cache bucket
+      "${var.cache.arn}*",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "cache_access" {
+  role       = aws_iam_role._.id
+  policy_arn = aws_iam_policy.cache_access.arn
+}
+
 data "aws_iam_policy_document" "assume_role_policy" {
   statement {
     effect  = "Allow"
