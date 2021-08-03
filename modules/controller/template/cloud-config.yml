@@ -110,6 +110,10 @@ runcmd:
   # install docker machine
   - [ sh, -c, "curl --location https://gitlab-docker-machine-downloads.s3.amazonaws.com/v0.16.2-gitlab.12/docker-machine-Linux-x86_64 > /bin/docker-machine" ]
   - [ chmod, +x, /bin/docker-machine ]
+  # create a dummy machine to trigger initialization
+  # https://gitlab.com/gitlab-org/gitlab-runner/-/issues/3676
+  - [ docker-machine, create, --driver, none, --url, localhost, init-machine ]
+  - [ docker-machine, rm, -y, init-machine ]
   # grant gitlab runner access to docker daemon
   - [ usermod, --append, --groups, docker, gitlab-runner ]
   - [ systemctl, restart, docker ]
