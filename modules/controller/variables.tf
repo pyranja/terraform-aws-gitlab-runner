@@ -53,7 +53,7 @@ variable "manager_ami_id" {
 }
 
 variable "manager_instance_type" {
-  description = "The type of EC2 instance to use for the manager instance (defaults to t3.nano)."
+  description = "The type of EC2 instance to use for the manager instance (defaults to t3.micro)."
   type        = string
-  default     = "t3.nano"
+  default     = "t3.micro"
 }
