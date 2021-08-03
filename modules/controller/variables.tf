@@ -2,6 +2,11 @@
 variable "name" {
   description = "The name of this gitlab runner. Used as the default Name tag on each EC2 Instance and to namespace all the resources created by this module."
   type        = string
+
+  validation {
+    condition = length(var.name) <= 28
+    error_message = "The runner name may consist of up to 28 characters. Otherwise worker host names exceed docker limits."
+  }
 }
 
 variable "subnet_id" {

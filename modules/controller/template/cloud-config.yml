@@ -33,7 +33,7 @@ write_files:
           IdleTime = 1800
           MaxBuilds = 100
           MachineDriver = "amazonec2"
-          MachineName = "gl-${name}-worker-%s"
+          MachineName = "${name}-%s"
           MachineOptions = [
             "amazonec2-region=${region}",
             "amazonec2-instance-type=${instance_type}",
