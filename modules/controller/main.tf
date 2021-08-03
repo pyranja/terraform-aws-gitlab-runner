@@ -49,11 +49,11 @@ resource "aws_autoscaling_group" "_" {
   vpc_zone_identifier = [data.aws_subnet.runner_subnet.id]
 
   health_check_type         = "EC2"
-  health_check_grace_period = 300
+  health_check_grace_period = 0
 
   launch_template {
     id      = aws_launch_template._.id
-    version = "$Latest"
+    version = aws_launch_template._.latest_version
   }
 
   # rollout launch template changes automatically
