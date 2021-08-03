@@ -28,7 +28,7 @@ variable "autoscale" {
 
 # ----------------------------------------------------------------------------------------------------------------------
 # OPTIONAL PARAMETERS
-# These variables may be optionally passed in by the templates using this module to overwite the defaults.
+# These variables may be optionally passed in by the templates using this module to overwrite the defaults.
 # ----------------------------------------------------------------------------------------------------------------------
 
 variable "tags" {
