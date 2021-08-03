@@ -81,8 +81,8 @@ resource "aws_launch_template" "_" {
 
   update_default_version = true
 
-  image_id      = coalesce(var.manager_ami_id, data.aws_ami.amzn_linux_2.id)
-  instance_type = var.manager_instance_type
+  image_id      = coalesce(var.controller_ami_id, data.aws_ami.amzn_linux_2.id)
+  instance_type = var.controller_instance_type
 
   user_data = base64encode(templatefile("${path.module}/template/cloud-config.yml", {
     name          = var.name
