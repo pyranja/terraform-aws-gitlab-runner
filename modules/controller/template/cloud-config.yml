@@ -72,6 +72,20 @@ write_files:
           region            ${region}
           log_group_name    /gitlab/runner/${name}
           log_stream_name   journald
+  - path: "/bin/init-docker-machine.sh"
+    permissions: "0755"
+    owner: "root:root"
+    content: |
+      # create a throw away machine to trigger initialization
+      # See: https://gitlab.com/gitlab-org/gitlab-runner/issues/3676
+      # set HOME/USER to ensure that certificates are created in the right place and with matching content
+      # See: https://github.com/docker/machine/issues/3845#issuecomment-280389178
+      export USER=root
+      export HOME=/root
+      docker-machine create --driver none --url localhost init-machine
+      docker-machine rm -y init-machine
+      unset HOME
+      unset USER
 
 yum_repos:
   gitlab-runner:
@@ -109,13 +123,10 @@ runcmd:
   - [ systemctl, restart, td-agent-bit ]
   # gitlab-runner must wait until docker-machine is installed and initialized
   - [ systemctl, stop, gitlab-runner ]
-  # install docker machine
+  # install docker machine and initialize env
   - [ sh, -c, "curl --location https://gitlab-docker-machine-downloads.s3.amazonaws.com/v0.16.2-gitlab.12/docker-machine-Linux-x86_64 > /bin/docker-machine" ]
   - [ chmod, +x, /bin/docker-machine ]
-  # create a dummy machine to trigger initialization
-  # https://gitlab.com/gitlab-org/gitlab-runner/-/issues/3676
-  - [ docker-machine, create, --driver, none, --url, localhost, init-machine ]
-  - [ docker-machine, rm, -y, init-machine ]
+  - [ /bin/init-docker-machine.sh ]
   # grant gitlab runner access to docker daemon
   - [ usermod, --append, --groups, docker, gitlab-runner ]
   - [ systemctl, restart, docker ]
