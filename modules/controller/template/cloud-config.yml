@@ -107,6 +107,8 @@ packages:
 runcmd:
   # ensure log exporter is running
   - [ systemctl, restart, td-agent-bit ]
+  # gitlab-runner must wait until docker-machine is installed and initialized
+  - [ systemctl, stop, gitlab-runner ]
   # install docker machine
   - [ sh, -c, "curl --location https://gitlab-docker-machine-downloads.s3.amazonaws.com/v0.16.2-gitlab.12/docker-machine-Linux-x86_64 > /bin/docker-machine" ]
   - [ chmod, +x, /bin/docker-machine ]
@@ -117,4 +119,5 @@ runcmd:
   # grant gitlab runner access to docker daemon
   - [ usermod, --append, --groups, docker, gitlab-runner ]
   - [ systemctl, restart, docker ]
+  # all pre-requisites are met now - gitlab runner can start to pick up jobs
   - [ systemctl, restart, gitlab-runner ]
