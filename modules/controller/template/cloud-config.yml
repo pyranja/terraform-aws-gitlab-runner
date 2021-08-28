@@ -86,6 +86,23 @@ write_files:
       docker-machine rm -y init-machine
       unset HOME
       unset USER
+  - path: "/bin/cleanup-runner.sh"
+    permissions: "0755"
+    owner: "root:root"
+    content: |
+      #!/usr/bin/env bash
+      set -x
+      # docker-machine must find its config store
+      export MACHINE_STORAGE_PATH='/root/.docker/machine'
+      echo "cleaning up as: $(id)"
+      # cleanup a gitlab runner - executed on EC2 termination
+      # stop gitlab runner process
+      systemctl stop gitlab-runner
+      systemctl status gitlab-runner
+      # destroy all worker machines
+      docker-machine ls
+      docker-machine rm -y $(docker-machine ls -q)
+      docker-machine ls
 
 yum_repos:
   gitlab-runner:
