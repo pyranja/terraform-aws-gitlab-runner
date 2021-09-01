@@ -1,0 +1,121 @@
+#cloud-config
+---
+package_update: true
+package_upgrade: all
+
+timezone: "UTC"
+write_files:
+  - path: "/etc/gitlab-runner/config.toml"
+    permissions: "0644"
+    owner: "root:root"
+    content: |
+      concurrent = ${max_concurrent_jobs}
+      check_interval = 0
+      listen_address = "0.0.0.0:9252"
+      log_level = "info"
+
+      [[runners]]
+        name = "${name}"
+        url = "${gitlab_url}"
+        token = "${gitlab_token}"
+        executor = "docker"
+        limit = ${max_concurrent_jobs}
+        [runners.docker]
+          image = "docker"
+          pull_policy = "always"
+          volumes = ["/var/run/docker.sock:/var/run/docker.sock", "/cache"]
+          wait_for_services_timeout = 30
+          disable_cache = true
+          privileged = false
+          shm_size = 0
+        [runners.cache]
+          Type = "s3"
+          Shared = true
+          [runners.cache.s3]
+            BucketName = "${cache_bucket}"
+            BucketLocation = "${cache_region}"
+  - path: "/etc/td-agent-bit/td-agent-bit.conf"
+    permissions: "0644"
+    owner: "root:root"
+    content: |
+      [SERVICE]
+          Flush        5
+          Daemon       Off
+          Log_Level    info
+          HTTP_Server  Off
+          HTTP_Listen  0.0.0.0
+          HTTP_Port    2020
+      [INPUT]
+          Name  systemd
+          Tag   journald.*
+      [OUTPUT]
+          Name              cloudwatch_logs
+          Match             *
+          region            ${region}
+          log_group_name    /gitlab/runner/${name}
+          log_stream_name   journald
+  - path: "/etc/systemd/system/docker-prune.service"
+    permissions: "0644"
+    owner: "root:root"
+    content: |
+      [Unit]
+      Description=Prune docker state
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/docker system prune --force --all --volumes
+  - path: "/etc/systemd/system/docker-prune.timer"
+    permissions: "0644"
+    owner: "root:root"
+    content: |
+      [Unit]
+      Description=Nightly docker prune
+      [Timer]
+      OnCalendar=daily
+      # spread out over 2h
+      RandomizedDelaySec=7200
+      Persistent=true
+      [Install]
+      WantedBy=timers.target
+
+yum_repos:
+  gitlab-runner:
+    enabled: true
+    baseurl: 'https://packages.gitlab.com/runner/gitlab-runner/el/8/$basearch'
+    gpgcheck: false
+    repo_gpgcheck: true
+    gpgkey: 'https://packages.gitlab.com/runner/gitlab-runner/gpgkey'
+    sslverify: true
+    sslcacert: '/etc/pki/tls/certs/ca-bundle.crt'
+  gitlab-runner-source:
+    enabled: true
+    baseurl: 'https://packages.gitlab.com/runner/gitlab-runner/el/8/SRPMS'
+    gpgcheck: false
+    repo_gpgcheck: true
+    gpgkey: 'https://packages.gitlab.com/runner/gitlab-runner/gpgkey'
+    sslverify: true
+    sslcacert: '/etc/pki/tls/certs/ca-bundle.crt'
+  td-agent-bit:
+    enabled: true
+    baseurl: 'https://packages.fluentbit.io/amazonlinux/2/$basearch/'
+    gpgcheck: true
+    repo_gpgcheck: false
+    gpgkey: 'https://packages.fluentbit.io/fluentbit.key'
+    sslverify: true
+    sslcacert: '/etc/pki/tls/certs/ca-bundle.crt'
+
+packages:
+  - docker
+  - gitlab-runner
+  - td-agent-bit
+
+runcmd:
+  - [ systemctl, daemon-reload ]
+  # ensure log exporter is running
+  - [ systemctl, restart, td-agent-bit ]
+  # gitlab-runner must wait until docker-machine is installed and initialized
+  - [ systemctl, stop, gitlab-runner ]
+  # grant gitlab runner access to docker daemon
+  - [ usermod, --append, --groups, docker, gitlab-runner ]
+  - [ systemctl, restart, docker ]
+  # all pre-requisites are met now - gitlab runner can start to pick up jobs
+  - [ systemctl, restart, gitlab-runner ]
