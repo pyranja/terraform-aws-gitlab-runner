@@ -4,7 +4,7 @@ variable "name" {
   type        = string
 
   validation {
-    condition = length(var.name) <= 28
+    condition     = length(var.name) <= 28
     error_message = "The runner name may consist of up to 28 characters. Otherwise worker host names exceed docker limits."
   }
 }
