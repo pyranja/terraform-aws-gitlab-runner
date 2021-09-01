@@ -91,6 +91,7 @@ resource "aws_launch_template" "_" {
     region        = data.aws_region.current.name
     vpc_id        = data.aws_subnet.runner_subnet.vpc_id
     subnet_id     = data.aws_subnet.runner_subnet.id
+    worker_sg     = aws_security_group.worker.name
     zone          = trimprefix(data.aws_subnet.runner_subnet.availability_zone, data.aws_region.current.name)
     instance_type = var.autoscale.instance_type
     min_worker    = var.autoscale.min_worker
@@ -114,6 +115,49 @@ resource "aws_launch_template" "_" {
   credit_specification {
     cpu_credits = "standard" # disables default unlimited credit spec for t3+ instance types
   }
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# The worker instances must be able to contact arbitrary networks for builds and must be reachable from the manager
+# ----------------------------------------------------------------------------------------------------------------------
+
+resource "aws_security_group" "worker" {
+  name = "${local.manager_instance_name}-worker"
+  tags = local.tags
+
+  vpc_id = data.aws_subnet.runner_subnet.vpc_id
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_security_group_rule" "worker_allow_inbound_docker" {
+  type                     = "ingress"
+  from_port                = 2376
+  to_port                  = 2376
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group._.id
+  security_group_id        = aws_security_group.worker.id
+}
+
+resource "aws_security_group_rule" "worker_allow_inbound_ssh" {
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group._.id
+  security_group_id        = aws_security_group.worker.id
+}
+
+# egress connectivity
+resource "aws_security_group_rule" "worker_allow_outbound_all" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.worker.id
 }
 
 # ----------------------------------------------------------------------------------------------------------------------

@@ -40,9 +40,10 @@ write_files:
             "amazonec2-vpc-id=${vpc_id}",
             "amazonec2-subnet-id=${subnet_id}",
             "amazonec2-zone=${zone}",
+            "amazonec2-security-group=${worker_sg}",
             "amazonec2-use-private-address=true",
             "amazonec2-private-address-only=true",
-            "amazonec2-tags=Provisioner,gitlab",
+            "amazonec2-tags=Provisioner,gitlab,GitlabRunner,${name},GitlabRunnerType,worker",
             "amazonec2-request-spot-instance=true",
             "amazonec2-spot-price=",
           ]
