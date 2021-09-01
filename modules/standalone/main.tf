@@ -95,6 +95,17 @@ resource "aws_launch_template" "_" {
   image_id      = coalesce(var.ami_id, data.aws_ami.amzn_linux_2.id)
   instance_type = var.autoscale.instance_type
 
+  # increase root volume size
+  block_device_mappings {
+    device_name = "/dev/xvda"
+
+    ebs {
+      volume_type           = "gp2"
+      volume_size           = var.autoscale.volume_size
+      delete_on_termination = true
+    }
+  }
+
   user_data = base64encode(templatefile("${path.module}/template/cloud-config.yml", {
     name                = var.name
     gitlab_url          = var.gitlab.url

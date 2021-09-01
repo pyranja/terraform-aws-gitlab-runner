@@ -94,6 +94,7 @@ resource "aws_launch_template" "_" {
     worker_sg     = aws_security_group.worker.name
     zone          = trimprefix(data.aws_subnet.runner_subnet.availability_zone, data.aws_region.current.name)
     instance_type = var.autoscale.instance_type
+    disk_size_gb  = var.autoscale.volume_size
     min_worker    = var.autoscale.min_worker
     max_worker    = var.autoscale.max_worker
     cache_bucket  = var.cache.id
