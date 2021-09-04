@@ -168,7 +168,7 @@ resource "aws_security_group_rule" "allow_outbound_all" {
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
-# The manager instance requires full access to EC2 for spawning runner VMs and access to the S3 bucket for caching
+# The runner instance requires access to the S3 bucket for caching.
 # ----------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "_" {
