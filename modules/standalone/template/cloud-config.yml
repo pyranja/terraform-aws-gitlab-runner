@@ -30,7 +30,7 @@ write_files:
     owner: "root:root"
     content: |
       listen_address = "0.0.0.0:9252"
-      concurrent = 5
+      concurrent = ${max_concurrent_jobs}
       check_interval = 0
       log_level = "info"
       [session_server]
