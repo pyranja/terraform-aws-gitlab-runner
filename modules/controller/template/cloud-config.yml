@@ -5,56 +5,92 @@ package_upgrade: all
 
 timezone: "UTC"
 write_files:
+  - path: "/etc/gitlab-runner/template.toml"
+    permissions: "0644"
+    owner: "root:root"
+    content: |
+      [[runners]]
+      executor = "docker+machine"
+      limit = ${max_worker}
+      [runners.docker]
+      image = "docker"
+      pull_policy = "always"
+      wait_for_services_timeout = 30
+      disable_cache = true
+      privileged = false
+      shm_size = 0
+      [runners.machine]
+      IdleCount = ${min_worker}
+      IdleTime = 1800
+      MaxBuilds = 100
+      MachineDriver = "amazonec2"
+      MachineName = "${runner_name}-%s"
+      MachineOptions = [
+        "amazonec2-region=${region}",
+        "amazonec2-instance-type=${instance_type}",
+        "amazonec2-root-size=${disk_size_gb}",
+        "amazonec2-vpc-id=${vpc_id}",
+        "amazonec2-subnet-id=${subnet_id}",
+        "amazonec2-zone=${zone}",
+        "amazonec2-security-group=${worker_sg}",
+        "amazonec2-security-group-readonly=true",
+        "amazonec2-use-private-address=true",
+        "amazonec2-private-address-only=true",
+        "amazonec2-tags=Provisioner,gitlab,GitlabRunner,${runner_name},GitlabRunnerType,worker",
+        "amazonec2-request-spot-instance=true",
+        "amazonec2-spot-price=",
+      ]
+      [runners.cache]
+      Type = "s3"
+      Shared = true
+      [runners.cache.s3]
+      BucketName = "${cache_bucket}"
+      BucketLocation = "${cache_region}"
   - path: "/etc/gitlab-runner/config.toml"
     permissions: "0644"
     owner: "root:root"
     content: |
+      listen_address = "0.0.0.0:9252"
       concurrent = ${max_worker}
       check_interval = 0
-      listen_address = "0.0.0.0:9252"
       log_level = "info"
-
-      [[runners]]
-        name = "${runner_name}"
-        url = "${gitlab_url}"
-        token = "${gitlab_token}"
-        executor = "docker+machine"
-        limit = ${max_worker}
-        [runners.docker]
-          image = "docker"
-          pull_policy = "always"
-          volumes = ["/var/run/docker.sock:/var/run/docker.sock"]
-          wait_for_services_timeout = 30
-          disable_cache = true
-          privileged = false
-          shm_size = 0
-        [runners.machine]
-          IdleCount = ${min_worker}
-          IdleTime = 1800
-          MaxBuilds = 100
-          MachineDriver = "amazonec2"
-          MachineName = "${runner_name}-%s"
-          MachineOptions = [
-            "amazonec2-region=${region}",
-            "amazonec2-instance-type=${instance_type}",
-            "amazonec2-root-size=${disk_size_gb}",
-            "amazonec2-vpc-id=${vpc_id}",
-            "amazonec2-subnet-id=${subnet_id}",
-            "amazonec2-zone=${zone}",
-            "amazonec2-security-group=${worker_sg}",
-            "amazonec2-security-group-readonly=true",
-            "amazonec2-use-private-address=true",
-            "amazonec2-private-address-only=true",
-            "amazonec2-tags=Provisioner,gitlab,GitlabRunner,${runner_name},GitlabRunnerType,worker",
-            "amazonec2-request-spot-instance=true",
-            "amazonec2-spot-price=",
-          ]
-        [runners.cache]
-          Type = "s3"
-          Shared = true
-          [runners.cache.s3]
-            BucketName = "${cache_bucket}"
-            BucketLocation = "${cache_region}"
+      [session_server]
+      session_timeout = 1800
+  - path: "/bin/register-runner.sh"
+    permissions: "0755"
+    owner: "root:root"
+    content: |
+      #!/usr/bin/env bash
+      set -x
+      # register the runner with the gitlab instance
+      gitlab-runner register \
+        --non-interactive \
+        --config '/etc/gitlab-runner/config.toml' \
+        --template-config '/etc/gitlab-runner/template.toml' \
+        --url "${gitlab_url}" \
+        --registration-token "${gitlab_token}" \
+        --executor "docker+machine" \
+        --docker-image "docker:latest" \
+        --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
+        --description "${runner_name}" \
+        --tag-list "${runner_tags}" \
+        --run-untagged="false" \
+        --locked="false" \
+        --access-level="not_protected"
+  - path: "/bin/init-docker-machine.sh"
+    permissions: "0755"
+    owner: "root:root"
+    content: |
+      # create a throw away machine to trigger initialization
+      # See: https://gitlab.com/gitlab-org/gitlab-runner/issues/3676
+      # set HOME/USER to ensure that certificates are created in the right place and with matching content
+      # See: https://github.com/docker/machine/issues/3845#issuecomment-280389178
+      export USER=root
+      export HOME=/root
+      docker-machine create --driver none --url localhost init-machine
+      docker-machine rm -y init-machine
+      unset HOME
+      unset USER
   - path: "/etc/td-agent-bit/td-agent-bit.conf"
     permissions: "0644"
     owner: "root:root"
@@ -75,33 +111,20 @@ write_files:
           region            ${region}
           log_group_name    /gitlab/runner/${runner_name}
           log_stream_name   journald
-  - path: "/bin/init-docker-machine.sh"
-    permissions: "0755"
-    owner: "root:root"
-    content: |
-      # create a throw away machine to trigger initialization
-      # See: https://gitlab.com/gitlab-org/gitlab-runner/issues/3676
-      # set HOME/USER to ensure that certificates are created in the right place and with matching content
-      # See: https://github.com/docker/machine/issues/3845#issuecomment-280389178
-      export USER=root
-      export HOME=/root
-      docker-machine create --driver none --url localhost init-machine
-      docker-machine rm -y init-machine
-      unset HOME
-      unset USER
-  - path: "/bin/cleanup-runner.sh"
+  - path: "/bin/termination-handler.sh"
     permissions: "0755"
     owner: "root:root"
     content: |
       #!/usr/bin/env bash
       set -x
-      # docker-machine must find its config store
-      export MACHINE_STORAGE_PATH='/root/.docker/machine'
       echo "cleaning up as: $(id)"
       # cleanup a gitlab runner - executed on EC2 termination
-      # stop gitlab runner process
+      # unregister gitlab runner process
       systemctl stop gitlab-runner
+      gitlab-runner unregister --config '/etc/gitlab-runner/config.toml' --all-runners
       systemctl status gitlab-runner
+      # docker-machine must find its config store
+      export MACHINE_STORAGE_PATH='/root/.docker/machine'
       # destroy all worker machines
       docker-machine ls
       docker-machine rm -y $(docker-machine ls -q)
@@ -139,6 +162,7 @@ packages:
   - td-agent-bit
 
 runcmd:
+  - [ systemctl, daemon-reload ]
   # ensure log exporter is running
   - [ systemctl, restart, td-agent-bit ]
   # gitlab-runner must wait until docker-machine is installed and initialized
@@ -151,4 +175,5 @@ runcmd:
   - [ usermod, --append, --groups, docker, gitlab-runner ]
   - [ systemctl, restart, docker ]
   # all pre-requisites are met now - gitlab runner can start to pick up jobs
+  - [ /bin/register-runner.sh ]
   - [ systemctl, restart, gitlab-runner ]
