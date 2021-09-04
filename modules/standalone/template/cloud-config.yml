@@ -5,35 +5,57 @@ package_upgrade: all
 
 timezone: "UTC"
 write_files:
+  - path: "/etc/gitlab-runner/template.toml"
+    permissions: "0644"
+    owner: "root:root"
+    content: |
+      [[runners]]
+      executor = "docker"
+      limit = ${max_concurrent_jobs}
+      [runners.docker]
+      image = "docker"
+      pull_policy = "always"
+      wait_for_services_timeout = 30
+      disable_cache = true
+      privileged = false
+      shm_size = 0
+      [runners.cache]
+      Type = "s3"
+      Shared = true
+      [runners.cache.s3]
+      BucketName = "${cache_bucket}"
+      BucketLocation = "${cache_region}"
   - path: "/etc/gitlab-runner/config.toml"
     permissions: "0644"
     owner: "root:root"
     content: |
-      concurrent = ${max_concurrent_jobs}
-      check_interval = 0
       listen_address = "0.0.0.0:9252"
+      concurrent = 5
+      check_interval = 0
       log_level = "info"
-
-      [[runners]]
-        name = "${name}"
-        url = "${gitlab_url}"
-        token = "${gitlab_token}"
-        executor = "docker"
-        limit = ${max_concurrent_jobs}
-        [runners.docker]
-          image = "docker"
-          pull_policy = "always"
-          volumes = ["/var/run/docker.sock:/var/run/docker.sock", "/cache"]
-          wait_for_services_timeout = 30
-          disable_cache = true
-          privileged = false
-          shm_size = 0
-        [runners.cache]
-          Type = "s3"
-          Shared = true
-          [runners.cache.s3]
-            BucketName = "${cache_bucket}"
-            BucketLocation = "${cache_region}"
+      [session_server]
+      session_timeout = 1800
+  - path: "/bin/register-runner.sh"
+    permissions: "0755"
+    owner: "root:root"
+    content: |
+      #!/usr/bin/env bash
+      set -x
+      # register the runner with the gitlab instance
+      gitlab-runner register \
+        --non-interactive \
+        --config '/etc/gitlab-runner/config.toml' \
+        --template-config '/etc/gitlab-runner/template.toml' \
+        --url "${gitlab_url}" \
+        --registration-token "${gitlab_token}" \
+        --executor "docker" \
+        --docker-image "docker:latest" \
+        --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
+        --description "${runner_name}" \
+        --tag-list "${runner_tags}" \
+        --run-untagged="false" \
+        --locked="false" \
+        --access-level="not_protected"
   - path: "/etc/td-agent-bit/td-agent-bit.conf"
     permissions: "0644"
     owner: "root:root"
@@ -52,7 +74,7 @@ write_files:
           Name              cloudwatch_logs
           Match             *
           region            ${region}
-          log_group_name    /gitlab/runner/${name}
+          log_group_name    /gitlab/runner/${runner_name}
           log_stream_name   journald
   - path: "/etc/systemd/system/docker-prune.service"
     permissions: "0644"
@@ -76,6 +98,18 @@ write_files:
       Persistent=true
       [Install]
       WantedBy=timers.target
+  - path: "/bin/termination-handler.sh"
+    permissions: "0755"
+    owner: "root:root"
+    content: |
+      #!/usr/bin/env bash
+      set -x
+      echo "cleaning up as: $(id)"
+      # cleanup a gitlab runner - executed on EC2 termination
+      # unregister gitlab runner process
+      systemctl stop gitlab-runner
+      gitlab-runner unregister --config '/etc/gitlab-runner/config.toml' --all-runners
+      systemctl status gitlab-runner
 
 yum_repos:
   gitlab-runner:
@@ -117,5 +151,6 @@ runcmd:
   # grant gitlab runner access to docker daemon
   - [ usermod, --append, --groups, docker, gitlab-runner ]
   - [ systemctl, restart, docker ]
-  # all pre-requisites are met now - gitlab runner can start to pick up jobs
+  # all pre-requisites are met now - register gitlab runner and start to pick up jobs
+  - [ /bin/register-runner.sh ]
   - [ systemctl, restart, gitlab-runner ]

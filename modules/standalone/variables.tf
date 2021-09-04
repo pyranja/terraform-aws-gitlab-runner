@@ -19,6 +19,7 @@ variable "gitlab" {
   type = object({
     url   = string
     token = string
+    tags  = list(string)
   })
 }
 

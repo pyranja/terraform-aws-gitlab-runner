@@ -107,7 +107,8 @@ resource "aws_launch_template" "_" {
   }
 
   user_data = base64encode(templatefile("${path.module}/template/cloud-config.yml", {
-    name                = var.name
+    runner_name         = var.name
+    runner_tags         = join(",", var.gitlab.tags)
     gitlab_url          = var.gitlab.url
     gitlab_token        = var.gitlab.token
     region              = data.aws_region.current.name
@@ -131,6 +132,18 @@ resource "aws_launch_template" "_" {
   credit_specification {
     cpu_credits = "standard" # disables default unlimited credit spec for t3+ instance types
   }
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Unregister the runner before termination
+# ----------------------------------------------------------------------------------------------------------------------
+
+module "termination" {
+  source = "../asg-termination-handler"
+
+  name              = local.runner_name
+  tags              = local.tags
+  autoscaling_group = aws_autoscaling_group._
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
