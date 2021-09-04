@@ -13,7 +13,7 @@ locals {
   runner_name = "gl-${var.name}"
 
   tags = merge(
-    { Name = local.runner_name },
+    { Name = local.runner_name, GitlabRunner = var.name },
     var.tags,
   )
 }
