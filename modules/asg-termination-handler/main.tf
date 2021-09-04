@@ -42,6 +42,9 @@ parameters:
 mainSteps:
   - name: 'RunCleanupScript'
     action: 'aws:runCommand'
+    timeoutSeconds: 60
+    onFailure: 'Continue'
+    isCritical: true
     inputs:
       DocumentName: AWS-RunShellScript
       TimeoutSeconds: 60
