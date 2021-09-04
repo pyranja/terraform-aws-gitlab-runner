@@ -134,7 +134,17 @@ resource "aws_launch_template" "_" {
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
-# The manager instance must be able to contact spawned runner VMs and the gitlab host to poll for jobs.
+# Pre-create a log group for the fluentd exporter running in the instances.
+# ----------------------------------------------------------------------------------------------------------------------
+
+resource "aws_cloudwatch_log_group" "_" {
+  name              = "/gitlab/runner/${var.name}"
+  tags              = local.tags
+  retention_in_days = 30
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Allow egress to contact gitlab instance and arbitrary connections during builds.
 # ----------------------------------------------------------------------------------------------------------------------
 
 resource "aws_security_group" "_" {

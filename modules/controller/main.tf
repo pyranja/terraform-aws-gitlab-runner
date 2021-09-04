@@ -85,7 +85,7 @@ resource "aws_launch_template" "_" {
   instance_type = var.controller_instance_type
 
   user_data = base64encode(templatefile("${path.module}/template/cloud-config.yml", {
-    name          = var.name
+    runner_name   = var.name
     gitlab_url    = var.gitlab.url
     gitlab_token  = var.gitlab.token
     region        = data.aws_region.current.name
@@ -116,6 +116,16 @@ resource "aws_launch_template" "_" {
   credit_specification {
     cpu_credits = "standard" # disables default unlimited credit spec for t3+ instance types
   }
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Pre-create a log group for the fluentd exporter running in the instances.
+# ----------------------------------------------------------------------------------------------------------------------
+
+resource "aws_cloudwatch_log_group" "_" {
+  name              = "/gitlab/runner/${var.name}"
+  tags              = local.tags
+  retention_in_days = 30
 }
 
 # ----------------------------------------------------------------------------------------------------------------------

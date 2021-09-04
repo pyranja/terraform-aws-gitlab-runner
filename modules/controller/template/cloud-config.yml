@@ -15,7 +15,7 @@ write_files:
       log_level = "info"
 
       [[runners]]
-        name = "${name}"
+        name = "${runner_name}"
         url = "${gitlab_url}"
         token = "${gitlab_token}"
         executor = "docker+machine"
@@ -33,7 +33,7 @@ write_files:
           IdleTime = 1800
           MaxBuilds = 100
           MachineDriver = "amazonec2"
-          MachineName = "${name}-%s"
+          MachineName = "${runner_name}-%s"
           MachineOptions = [
             "amazonec2-region=${region}",
             "amazonec2-instance-type=${instance_type}",
@@ -45,7 +45,7 @@ write_files:
             "amazonec2-security-group-readonly=true",
             "amazonec2-use-private-address=true",
             "amazonec2-private-address-only=true",
-            "amazonec2-tags=Provisioner,gitlab,GitlabRunner,${name},GitlabRunnerType,worker",
+            "amazonec2-tags=Provisioner,gitlab,GitlabRunner,${runner_name},GitlabRunnerType,worker",
             "amazonec2-request-spot-instance=true",
             "amazonec2-spot-price=",
           ]
@@ -73,7 +73,7 @@ write_files:
           Name              cloudwatch_logs
           Match             *
           region            ${region}
-          log_group_name    /gitlab/runner/${name}
+          log_group_name    /gitlab/runner/${runner_name}
           log_stream_name   journald
   - path: "/bin/init-docker-machine.sh"
     permissions: "0755"
