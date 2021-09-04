@@ -53,9 +53,9 @@ resource "aws_autoscaling_group" "_" {
   name = local.runner_name
 
   # the group should keep the single runner instance running
-  min_size         = 0
-  max_size         = 1
-  desired_capacity = 1
+  min_size         = var.autoscale.min_worker
+  max_size         = var.autoscale.max_worker
+  desired_capacity = var.autoscale.max_worker
 
   vpc_zone_identifier = [data.aws_subnet.runner_subnet.id]
 

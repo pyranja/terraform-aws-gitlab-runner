@@ -28,6 +28,8 @@ variable "autoscale" {
   type = object({
     instance_type = string
     volume_size   = number
+    max_worker    = number
+    min_worker    = number
   })
 }
 
