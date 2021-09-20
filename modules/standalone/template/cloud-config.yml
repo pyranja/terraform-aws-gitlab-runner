@@ -76,6 +76,15 @@ write_files:
           region            ${region}
           log_group_name    /gitlab/runner/${runner_name}
           log_stream_name   journald
+  - path: "/etc/docker/daemon.json"
+    permissions: "0644"
+    owner: "root:root"
+    content: |
+      {
+        "default-address-pools": [
+          { "base": "${docker_default_cidr}", "size": 24 }
+        ]
+      }
   - path: "/etc/systemd/system/docker-prune.service"
     permissions: "0644"
     owner: "root:root"

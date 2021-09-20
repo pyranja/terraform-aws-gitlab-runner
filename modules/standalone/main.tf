@@ -115,6 +115,8 @@ resource "aws_launch_template" "_" {
     max_concurrent_jobs = local.max_concurrent_jobs
     cache_bucket        = var.cache.id
     cache_region        = var.cache.region
+    # docker customization
+    docker_default_cidr = var.docker_default_cidr
   }))
 
   vpc_security_group_ids = [aws_security_group._.id]

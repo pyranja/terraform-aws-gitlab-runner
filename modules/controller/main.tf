@@ -100,6 +100,8 @@ resource "aws_launch_template" "_" {
     max_worker    = var.autoscale.max_worker
     cache_bucket  = var.cache.id
     cache_region  = var.cache.region
+    # docker customization
+    docker_default_cidr = var.docker_default_cidr
   }))
 
   vpc_security_group_ids = [aws_security_group._.id]

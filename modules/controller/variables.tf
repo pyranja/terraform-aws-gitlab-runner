@@ -47,6 +47,12 @@ variable "cache" {
 # These variables may be optionally passed in by the templates using this module to overwrite the defaults.
 # ----------------------------------------------------------------------------------------------------------------------
 
+variable "docker_default_cidr" {
+  description = "Override the default address pool of the docker daemon (default 192.168.0.0/16)."
+  type        = string
+  default     = "192.168.0.0/16"
+}
+
 variable "tags" {
   description = "A map of key value pairs that represents custom tags to apply to resources."
   type        = map(string)

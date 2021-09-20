@@ -39,6 +39,7 @@ write_files:
         "amazonec2-tags=Provisioner,gitlab,GitlabRunner,${runner_name},GitlabRunnerType,worker",
         "amazonec2-request-spot-instance=true",
         "amazonec2-spot-price=",
+        "engine-opt=default-address-pool=base=${docker_default_cidr},size=24",
       ]
       [runners.cache]
       Type = "s3"
