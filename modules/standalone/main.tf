@@ -70,8 +70,8 @@ resource "aws_autoscaling_group" "_" {
   # rollout launch template changes automatically
   instance_refresh {
     strategy = "Rolling"
-    preferences {
-      min_healthy_percentage = 0
+    preferences { # keep some runners around during upgrades
+      min_healthy_percentage = 90
     }
   }
 
