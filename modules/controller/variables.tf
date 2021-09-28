@@ -21,6 +21,7 @@ variable "gitlab" {
     token = string
     tags  = list(string)
   })
+  sensitive = true
 }
 
 variable "autoscale" {

@@ -15,6 +15,7 @@ variable "gitlab" {
     url   = string
     token = string
   })
+  sensitive = true
 }
 
 variable "autoscale" {
