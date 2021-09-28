@@ -76,3 +76,9 @@ variable "max_concurrent_jobs" {
     error_message = "Tha maximum number of concurrent jobs must be at least 1. Otherwise no jobs are executed."
   }
 }
+
+variable "permissions_boundary" {
+  description = "arn of the iam permission boundary policy to add to created roles"
+  type        = string
+  default     = null
+}

@@ -28,3 +28,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "permissions_boundary" {
+  description = "arn of the iam permission boundary policy to add to created roles"
+  type        = string
+  default     = null
+}

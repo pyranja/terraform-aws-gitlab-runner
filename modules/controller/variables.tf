@@ -71,3 +71,9 @@ variable "controller_instance_type" {
   type        = string
   default     = "t3.micro"
 }
+
+variable "permissions_boundary" {
+  description = "arn of the iam permission boundary policy to add to created roles"
+  type        = string
+  default     = null
+}

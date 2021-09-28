@@ -75,6 +75,8 @@ resource "aws_iam_role" "automation" {
   name_prefix        = "termination-handler-"
   tags               = var.tags
   assume_role_policy = data.aws_iam_policy_document.automation_assume.json
+
+  permissions_boundary = var.permissions_boundary
 }
 
 data "aws_iam_policy_document" "automation_assume" {
@@ -213,6 +215,8 @@ resource "aws_iam_role" "automation_event_target" {
   name_prefix        = "termination-handler-"
   tags               = var.tags
   assume_role_policy = data.aws_iam_policy_document.automation_event_target_assume.json
+
+  permissions_boundary = var.permissions_boundary
 }
 
 data "aws_iam_policy_document" "automation_event_target_assume" {

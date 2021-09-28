@@ -192,6 +192,8 @@ resource "aws_iam_role" "_" {
 
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
 
+  permissions_boundary = var.permissions_boundary
+
   lifecycle {
     create_before_destroy = true
   }
