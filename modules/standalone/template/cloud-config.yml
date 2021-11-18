@@ -118,7 +118,7 @@ write_files:
       # unregister gitlab runner process
       systemctl stop gitlab-runner
       gitlab-runner unregister --config '/etc/gitlab-runner/config.toml' --all-runners
-      systemctl status gitlab-runner
+      systemctl status gitlab-runner || true
 
 yum_repos:
   gitlab-runner:
