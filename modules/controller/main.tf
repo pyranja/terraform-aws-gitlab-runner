@@ -41,10 +41,11 @@ data "aws_ami" "amzn_linux_2" {
 resource "aws_autoscaling_group" "_" {
   name = local.manager_instance_name
 
-  # the group should keep the single manager instance running
+  # the group should keep the manager instances running
+  # run 2 managers to avoid downtime during re-deployments
   min_size         = 0
-  max_size         = 1
-  desired_capacity = 1
+  max_size         = 2
+  desired_capacity = 2
 
   vpc_zone_identifier = [data.aws_subnet.runner_subnet.id]
 
