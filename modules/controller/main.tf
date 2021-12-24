@@ -90,7 +90,7 @@ resource "aws_launch_template" "_" {
     runner_name   = var.name
     runner_tags   = join(",", var.gitlab.tags)
     gitlab_url    = var.gitlab.url
-    gitlab_token  = var.gitlab.token
+    token_secret  = var.gitlab_token.arn
     region        = data.aws_region.current.name
     vpc_id        = data.aws_subnet.runner_subnet.vpc_id
     subnet_id     = data.aws_subnet.runner_subnet.id
@@ -293,6 +293,31 @@ data "aws_iam_policy_document" "cache_access" {
 resource "aws_iam_role_policy_attachment" "cache_access" {
   role       = aws_iam_role._.id
   policy_arn = aws_iam_policy.cache_access.arn
+}
+
+resource "aws_iam_policy" "token_access" {
+  name_prefix = "${local.manager_instance_name}-token"
+  tags        = local.tags
+  policy      = data.aws_iam_policy_document.token_access.json
+}
+
+data "aws_iam_policy_document" "token_access" {
+  statement {
+    sid    = "GitlabToken"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+    ]
+
+    resources = [
+      var.gitlab_token.arn
+    ]
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "token_access" {
+  role       = aws_iam_role._.id
+  policy_arn = aws_iam_policy.token_access.arn
 }
 
 data "aws_iam_policy_document" "assume_role_policy" {

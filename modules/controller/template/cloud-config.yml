@@ -63,13 +63,15 @@ write_files:
     content: |
       #!/usr/bin/env bash
       set -x
+      # fetch registration token from secret
+      REGISTRATION_TOKEN=$(aws --region ${region} secretsmanager get-secret-value --secret-id ${token_secret} --output text --query 'SecretString')
       # register the runner with the gitlab instance
       gitlab-runner register \
         --non-interactive \
         --config '/etc/gitlab-runner/config.toml' \
         --template-config '/etc/gitlab-runner/template.toml' \
         --url "${gitlab_url}" \
-        --registration-token "${gitlab_token}" \
+        --registration-token "$${REGISTRATION_TOKEN}" \
         --executor "docker+machine" \
         --docker-image "docker:latest" \
         --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \

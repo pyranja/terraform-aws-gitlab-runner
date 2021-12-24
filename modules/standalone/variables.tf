@@ -18,10 +18,15 @@ variable "gitlab" {
   description = "Gitlab runner configuration."
   type = object({
     url   = string
-    token = string
     tags  = list(string)
   })
-  sensitive = true
+}
+
+variable "gitlab_token" {
+  description = "Reference the AWS secrets manager secret that holds the runner registration token."
+  type = object({
+    arn = string
+  })
 }
 
 variable "autoscale" {
