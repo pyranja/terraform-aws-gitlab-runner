@@ -79,6 +79,8 @@ resource "aws_autoscaling_group" "_" {
     "GroupDesiredCapacity",
     "GroupInServiceInstances",
   ]
+
+  depends_on = [aws_launch_template._]
 }
 
 resource "aws_launch_template" "_" {
