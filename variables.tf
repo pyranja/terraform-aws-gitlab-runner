@@ -13,7 +13,6 @@ variable "gitlab" {
   description = "Gitlab runner configuration."
   type = object({
     url   = string
-    token = string
     tags  = list(string)
   })
   sensitive = true
