@@ -57,6 +57,9 @@ resource "aws_autoscaling_group" "_" {
   max_size         = var.autoscale.max_worker
   desired_capacity = var.autoscale.max_worker
 
+  # recycle runner instances every day
+  max_instance_lifetime = 60 * 60 * 24
+
   vpc_zone_identifier = [data.aws_subnet.runner_subnet.id]
 
   health_check_type         = "EC2"
