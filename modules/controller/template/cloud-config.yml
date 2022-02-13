@@ -109,6 +109,9 @@ write_files:
       [INPUT]
           Name  systemd
           Tag   journald.*
+      [FILTER]
+          Name  aws
+          Match *
       [OUTPUT]
           Name              cloudwatch_logs
           Match             *
