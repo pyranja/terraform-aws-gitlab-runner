@@ -86,6 +86,28 @@ resource "aws_autoscaling_group" "_" {
   depends_on = [aws_launch_template._]
 }
 
+resource "aws_autoscaling_schedule" "night" {
+  scheduled_action_name  = "scale_down_at_night"
+  autoscaling_group_name = aws_autoscaling_group._.name
+
+  recurrence = "0 19 * * 1-5" # ~ 20:00 CET
+
+  min_size         = var.autoscale.min_worker
+  max_size         = var.autoscale.max_worker
+  desired_capacity = var.autoscale.min_worker
+}
+
+resource "aws_autoscaling_schedule" "day" {
+  scheduled_action_name  = "scale_up_day"
+  autoscaling_group_name = aws_autoscaling_group._.name
+
+  recurrence = "0 7 * * 1-5" # ~ 08:00 CET
+
+  min_size         = var.autoscale.min_worker
+  max_size         = var.autoscale.max_worker
+  desired_capacity = var.autoscale.max_worker
+}
+
 resource "aws_launch_template" "_" {
   name_prefix = local.runner_name
   tags        = local.tags
