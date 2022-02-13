@@ -105,8 +105,9 @@ resource "aws_launch_template" "_" {
     device_name = "/dev/xvda"
 
     ebs {
-      volume_type           = "gp2"
+      volume_type           = "gp3"
       volume_size           = var.autoscale.volume_size
+      encrypted             = true
       delete_on_termination = true
     }
   }

@@ -87,6 +87,18 @@ resource "aws_launch_template" "_" {
   image_id      = coalesce(var.controller_ami_id, data.aws_ami.amzn_linux_2.id)
   instance_type = var.controller_instance_type
 
+  # set root volume type
+  block_device_mappings {
+    device_name = "/dev/xvda"
+
+    ebs {
+      volume_type           = "gp3"
+      volume_size           = 20
+      encrypted             = true
+      delete_on_termination = true
+    }
+  }
+
   user_data = base64encode(templatefile("${path.module}/template/cloud-config.yml", {
     runner_name   = var.name
     runner_tags   = join(",", var.gitlab.tags)

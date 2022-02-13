@@ -29,6 +29,7 @@ write_files:
         "amazonec2-region=${region}",
         "amazonec2-instance-type=${instance_type}",
         "amazonec2-root-size=${disk_size_gb}",
+        "amazonec2-volume-type=gp3",
         "amazonec2-vpc-id=${vpc_id}",
         "amazonec2-subnet-id=${subnet_id}",
         "amazonec2-zone=${zone}",
