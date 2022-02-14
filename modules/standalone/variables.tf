@@ -79,14 +79,25 @@ variable "ami_id" {
   default     = null
 }
 
+variable "concurrency_factor" {
+  description = "Number of concurrent jobs to allow per available cpu (default 2)."
+  type        = number
+  default     = 2
+
+  validation {
+    condition     = var.concurrency_factor > 0
+    error_message = "The concurrency factor must be at least 1. Otherwise no jobs are executed."
+  }
+}
+
 variable "max_concurrent_jobs" {
-  description = "Maximum number of jobs to run in parallel per runner instance (defaults to 2 per available vcpu)."
+  description = "Maximum number of jobs to run in parallel per runner instance (defaults to var.concurrency_factor per available vcpu)."
   type        = number
   default     = null
 
   validation {
     condition     = var.max_concurrent_jobs == null ? true : var.max_concurrent_jobs > 0
-    error_message = "Tha maximum number of concurrent jobs must be at least 1. Otherwise no jobs are executed."
+    error_message = "The maximum number of concurrent jobs must be at least 1. Otherwise no jobs are executed."
   }
 }
 

@@ -43,7 +43,7 @@ data "aws_ec2_instance_type" "_" {
 
 locals {
   # calculate concurrent jobs - 2 jobs per available vcpu
-  default_concurrent_jobs = data.aws_ec2_instance_type._.default_vcpus * 2
+  default_concurrent_jobs = data.aws_ec2_instance_type._.default_vcpus * var.concurrency_factor
   max_concurrent_jobs     = coalesce(var.max_concurrent_jobs, local.default_concurrent_jobs)
 }
 
