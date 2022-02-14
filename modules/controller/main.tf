@@ -57,6 +57,15 @@ resource "aws_autoscaling_group" "_" {
     version = aws_launch_template._.latest_version
   }
 
+  dynamic "tag" {
+    for_each = local.tags
+    content {
+      key                 = tag.key
+      value               = tag.value
+      propagate_at_launch = true
+    }
+  }
+
   # rollout launch template changes automatically
   instance_refresh {
     strategy = "Rolling"
@@ -125,7 +134,8 @@ resource "aws_launch_template" "_" {
     arn = aws_iam_instance_profile._.arn
   }
 
-  metadata_options { # enforce IMDSv2
+  #checkov:skip=CKV_AWS_79:log export does not support IMDSv2
+  metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "optional"
     http_put_response_hop_limit = 1
@@ -153,6 +163,7 @@ module "termination" {
 # ----------------------------------------------------------------------------------------------------------------------
 
 resource "aws_cloudwatch_log_group" "_" {
+  #checkov:skip=CKV_AWS_158:AWS default encryption sufficient
   name              = "/gitlab/runner/${var.name}"
   tags              = local.tags
   retention_in_days = 30
@@ -163,6 +174,7 @@ resource "aws_cloudwatch_log_group" "_" {
 # ----------------------------------------------------------------------------------------------------------------------
 
 resource "aws_security_group" "worker" {
+  #checkov:skip=CKV_AWS_23:false positive - no inline rules
   name = "${local.manager_instance_name}-worker"
   tags = local.tags
 
@@ -174,6 +186,7 @@ resource "aws_security_group" "worker" {
 }
 
 resource "aws_security_group_rule" "worker_allow_inbound_docker" {
+  description              = "allow controller to worker docker daemon"
   type                     = "ingress"
   from_port                = 2376
   to_port                  = 2376
@@ -183,6 +196,7 @@ resource "aws_security_group_rule" "worker_allow_inbound_docker" {
 }
 
 resource "aws_security_group_rule" "worker_allow_inbound_ssh" {
+  description              = "allow controller to worker ssh"
   type                     = "ingress"
   from_port                = 22
   to_port                  = 22
@@ -193,6 +207,7 @@ resource "aws_security_group_rule" "worker_allow_inbound_ssh" {
 
 # egress connectivity
 resource "aws_security_group_rule" "worker_allow_outbound_all" {
+  description       = "allow worker egress"
   type              = "egress"
   from_port         = 0
   to_port           = 0
@@ -206,6 +221,7 @@ resource "aws_security_group_rule" "worker_allow_outbound_all" {
 # ----------------------------------------------------------------------------------------------------------------------
 
 resource "aws_security_group" "_" {
+  #checkov:skip=CKV_AWS_23:false positive - no inline rules
   name_prefix = local.manager_instance_name
   tags        = local.tags
 
@@ -217,6 +233,7 @@ resource "aws_security_group" "_" {
 }
 
 resource "aws_security_group_rule" "allow_outbound_all" {
+  description       = "allow egress"
   type              = "egress"
   from_port         = 0
   to_port           = 0

@@ -12,8 +12,8 @@ variable "subnet_id" {
 variable "gitlab" {
   description = "Gitlab runner configuration."
   type = object({
-    url   = string
-    tags  = list(string)
+    url  = string
+    tags = list(string)
   })
   sensitive = true
 }

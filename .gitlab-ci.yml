@@ -1,0 +1,74 @@
+
+variables:
+  # major.minor version to use for module releases
+  RELEASE_VERSION: '3.3'
+
+# automatically retry if a job fails due to a system error
+default:
+  retry:
+    max: 1
+    when: runner_system_failure
+
+# see https://github.com/hashicorp/docker-hub-images/issues/37#issuecomment-356330221
+image:
+  name: hashicorp/terraform:light
+  entrypoint:
+    - '/usr/bin/env'
+    - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+
+# run on MRs and default branch, skip tags as we release from default branch
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# publish module on merge
+release:
+  stage: deploy
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script: echo "releasing v${RELEASE_VERSION}.${CI_PIPELINE_IID}"
+  release:
+    name: "Release v${RELEASE_VERSION}.${CI_PIPELINE_IID}"
+    description: "${CI_COMMIT_MESSAGE}"
+    tag_name: "${RELEASE_VERSION}.${CI_PIPELINE_IID}"
+    ref: '$CI_COMMIT_SHA'
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+# enforce standard terraform format
+tf::fmt:
+  stage: test
+  needs: [ ]
+  dependencies: [ ]
+  script:
+    - terraform version
+    - terraform fmt -check -diff -recursive
+
+# sanity check configuration
+tf::validate:
+  stage: test
+  needs: [ ]
+  dependencies: [ ]
+  script:
+    - terraform version
+    - terraform init
+    - terraform validate
+
+# security scan
+tf::checkov:
+  stage: test
+  image:
+    name: bridgecrew/checkov
+    entrypoint:
+      - '/usr/bin/env'
+      - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+  needs: [ ]
+  dependencies: [ ]
+  script:
+    - checkov --quiet --directory . --output junitxml > checkov-junit-report.xml || true
+    - checkov --quiet --directory . --output cli
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - ./checkov-junit-report.xml

@@ -171,6 +171,7 @@ resource "aws_cloudwatch_event_rule" "_" {
 }
 
 resource "aws_cloudwatch_log_group" "_" {
+  #checkov:skip=CKV_AWS_158:AWS default encryption sufficient
   name              = "/aws/events/${var.name}-termination-handler"
   tags              = var.tags
   retention_in_days = 30

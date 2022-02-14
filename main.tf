@@ -1,9 +1,17 @@
 
 terraform {
   required_version = ">= 0.14"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 3.0.0, < 4"
+    }
+  }
 }
 
 resource "aws_secretsmanager_secret" "token" {
+  #checkov:skip=CKV_AWS_149:aws default encryption is sufficient
   name        = "${var.name}/registration_token"
   description = "Gitlab registration token for runner ${var.name}."
   tags        = var.tags

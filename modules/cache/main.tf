@@ -17,6 +17,10 @@ locals {
 }
 
 resource "aws_s3_bucket" "_" {
+  #checkov:skip=CKV_AWS_18:cache requires no access logs
+  #checkov:skip=CKV_AWS_144:cache requires no replication
+  #checkov:skip=CKV_AWS_145:AWS default encryption sufficient
+  #checkov:skip=CKV_AWS_21:cache requires no versioning
 
   # avoid name clashes
   bucket_prefix = "${local.cache_name}-"
