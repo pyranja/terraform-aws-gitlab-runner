@@ -67,11 +67,6 @@ resource "aws_autoscaling_group" "_" {
   health_check_type         = "EC2"
   health_check_grace_period = 0
 
-  launch_template {
-    id      = aws_launch_template._.id
-    version = aws_launch_template._.latest_version
-  }
-
   dynamic "tag" {
     for_each = local.tags
     content {
@@ -80,6 +75,23 @@ resource "aws_autoscaling_group" "_" {
       propagate_at_launch = true
     }
   }
+
+  # request spot instances
+  mixed_instances_policy {
+    launch_template {
+      launch_template_specification {
+        launch_template_id = aws_launch_template._.id
+        version            = aws_launch_template._.latest_version
+      }
+    }
+    instances_distribution {
+      on_demand_base_capacity                  = 1 # ensure at least one runner is always up
+      on_demand_percentage_above_base_capacity = 0 # request only spot instances
+    }
+  }
+
+  # preempts spot terminations
+  capacity_rebalance = true
 
   # rollout launch template changes automatically
   instance_refresh {
