@@ -16,11 +16,13 @@ locals {
     { Name = local.runner_name, GitlabRunner = var.name },
     var.tags,
   )
+
+  subnets = compact(flatten([var.subnet_id, var.subnets]))
 }
 
 # lookup full subnet information
 data "aws_subnet" "runner_subnet" {
-  id = var.subnet_id
+  id = local.subnets[0]
 }
 
 # by default use the latest Amazon Linux 2 AMI
@@ -60,7 +62,7 @@ resource "aws_autoscaling_group" "_" {
   # recycle runner instances every day
   max_instance_lifetime = 60 * 60 * 24
 
-  vpc_zone_identifier = [data.aws_subnet.runner_subnet.id]
+  vpc_zone_identifier = local.subnets
 
   health_check_type         = "EC2"
   health_check_grace_period = 0

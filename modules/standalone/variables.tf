@@ -10,8 +10,15 @@ variable "name" {
 }
 
 variable "subnet_id" {
-  description = "ID of the subnet where the runner should be deployed (e.g., subnet-abcd1234)."
+  description = "ID of the subnet where the runner should be deployed, e.g. subnet-abcd1234 (specify either this or subnet_id)."
   type        = string
+  default     = null
+}
+
+variable "subnets" {
+  description = "VPC subnet ids to use for runners (specify either this or subnet_id)."
+  type        = list(string)
+  default     = []
 }
 
 variable "gitlab" {
