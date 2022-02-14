@@ -267,7 +267,7 @@ resource "aws_iam_role" "_" {
 # managed policy that grants local ssm agent permissions to manage the instance
 # amzn linux 2 bundles the ssm agent and with appropriate IAM permission it will auto-activate
 data "aws_iam_policy" "ssm" {
-  arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+  arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 resource "aws_iam_role_policy_attachment" "ssm" {
