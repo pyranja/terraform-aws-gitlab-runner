@@ -152,8 +152,9 @@ resource "aws_launch_template" "_" {
     token_secret        = var.gitlab_token.arn
     region              = data.aws_region.current.name
     max_concurrent_jobs = local.max_concurrent_jobs
-    cache_bucket        = var.cache.id
-    cache_region        = var.cache.region
+    shared_cache        = var.cache != null
+    cache_bucket        = var.cache == null ? "" : var.cache.id
+    cache_region        = var.cache == null ? "" : var.cache.region
     # docker customization
     docker_default_cidr = var.docker_default_cidr
   }))
@@ -269,13 +270,11 @@ resource "aws_iam_role_policy_attachment" "cloudwatch" {
   policy_arn = data.aws_iam_policy.cloudwatch.arn
 }
 
-resource "aws_iam_policy" "cache_access" {
-  name_prefix = "${local.runner_name}-cache"
-  tags        = local.tags
-  policy      = data.aws_iam_policy_document.cache_access.json
-}
-
+# dynamically included policy for S3 cache access
+# dependent policy and policy attachment resources use for_each
 data "aws_iam_policy_document" "cache_access" {
+  for_each = var.cache == null ? {} : { enabled : var.cache.arn }
+
   statement {
     sid    = "GitlabCache"
     effect = "Allow"
@@ -287,15 +286,25 @@ data "aws_iam_policy_document" "cache_access" {
     ]
 
     resources = [
-      var.cache.arn,        # access to put objects
-      "${var.cache.arn}/*", # access to read/remove objects
+      each.value,        # access to put objects
+      "${each.value}/*", # access to read/remove objects
     ]
   }
 }
 
+resource "aws_iam_policy" "cache_access" {
+  for_each = data.aws_iam_policy_document.cache_access
+
+  name_prefix = "${local.runner_name}-cache"
+  tags        = local.tags
+  policy      = each.value.json
+}
+
 resource "aws_iam_role_policy_attachment" "cache_access" {
+  for_each = aws_iam_policy.cache_access
+
   role       = aws_iam_role._.id
-  policy_arn = aws_iam_policy.cache_access.arn
+  policy_arn = each.value.arn
 }
 
 resource "aws_iam_policy" "token_access" {

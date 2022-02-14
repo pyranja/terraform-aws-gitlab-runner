@@ -21,10 +21,12 @@ write_files:
       shm_size = 0
       [runners.cache]
       Type = "s3"
-      Shared = true
+      Shared = ${shared_cache}
+%{if shared_cache}
       [runners.cache.s3]
       BucketName = "${cache_bucket}"
       BucketLocation = "${cache_region}"
+%{endif}
   - path: "/etc/gitlab-runner/config.toml"
     permissions: "0644"
     owner: "root:root"

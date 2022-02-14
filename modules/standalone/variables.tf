@@ -47,12 +47,13 @@ variable "autoscale" {
 }
 
 variable "cache" {
-  description = "Gitlab runner S3 bucket for caching."
+  description = "Gitlab runner S3 bucket for caching (null to disable shared cache)."
   type = object({
     id     = string
     arn    = string
     region = string
   })
+  default = null
 }
 
 # ----------------------------------------------------------------------------------------------------------------------
